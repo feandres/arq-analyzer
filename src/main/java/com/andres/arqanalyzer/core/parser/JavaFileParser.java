@@ -2,7 +2,6 @@ package com.andres.arqanalyzer.core.parser;
 
 import com.andres.arqanalyzer.core.model.ClassNode;
 import com.andres.arqanalyzer.core.model.ClassType;
-import com.github.javaparser.ParserConfiguration;
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
@@ -98,15 +97,10 @@ public class JavaFileParser {
                 .toList();
     }
 
-    // remove generics e pega o tipo interno quando relevante
-    // List<Vet> → Vet
-    // Map<String, Owner> → ignorado (múltiplos tipos, ambíguo)
-    // Optional<Pet> → Pet
     private String extractSimpleName(String type) {
         if (type.contains("<") && type.contains(">")) {
             String inner = type.substring(type.indexOf('<') + 1, type.lastIndexOf('>'));
 
-            // se tem vírgula dentro é Map<K,V> — ignora o wrapper, pega só o conteúdo
             if (!inner.contains(",")) {
                 return inner.trim();
             }
