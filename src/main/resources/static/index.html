@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Architecture Analyzer</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.28.1/cytoscape.min.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0f1117;
+            color: #e2e8f0;
+            min-height: 100vh;
+        }
+
+        header {
+            padding: 20px 32px;
+            border-bottom: 1px solid #1e2433;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        header h1 { font-size: 18px; font-weight: 600; color: #f1f5f9; }
+        header span { font-size: 12px; color: #64748b; }
+
+        #input {
+            padding: 24px 32px;
+            border-bottom: 1px solid #1e2433;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        #input input {
+            flex: 1;
+            padding: 10px 16px;
+            background: #1e2433;
+            border: 1px solid #2d3748;
+            border-radius: 8px;
+            color: #e2e8f0;
+            font-size: 14px;
+            outline: none;
+        }
+
+        #input input:focus { border-color: #6366f1; }
+        #input input::placeholder { color: #475569; }
+
+        #input button {
+            padding: 10px 24px;
+            background: #6366f1;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+            white-space: nowrap;
+        }
+
+        #input button:hover { background: #4f46e5; }
+        #input button:disabled { background: #374151; cursor: not-allowed; }
+
+        #status {
+            padding: 12px 32px;
+            font-size: 13px;
+            color: #64748b;
+            min-height: 40px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .spinner {
+            width: 14px; height: 14px;
+            border: 2px solid #374151;
+            border-top-color: #6366f1;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            display: none;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        #dashboard { display: none; }
+
+        #summary {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1px;
+            background: #1e2433;
+            border-bottom: 1px solid #1e2433;
+        }
+
+        .stat { background: #0f1117; padding: 20px 32px; }
+        .stat-value { font-size: 28px; font-weight: 700; color: #f1f5f9; }
+        .stat-label { font-size: 12px; color: #64748b; margin-top: 4px; }
+        .stat-value.warn   { color: #f59e0b; }
+        .stat-value.danger { color: #ef4444; }
+        .stat-value.ok     { color: #10b981; }
+
+        #main {
+            display: grid;
+            grid-template-columns: 1fr 360px;
+            height: calc(100vh - 280px);
+            min-height: 500px;
+        }
+
+        #graph {
+            border-right: 1px solid #1e2433;
+            position: relative;
+        }
+
+        #cy { width: 100%; height: 100%; background: #0f1117; }
+
+        #graph-controls {
+            position: absolute;
+            top: 12px; left: 12px;
+            display: flex;
+            gap: 6px;
+        }
+
+        .ctrl-btn {
+            padding: 6px 12px;
+            background: #1e2433;
+            border: 1px solid #2d3748;
+            border-radius: 6px;
+            color: #94a3b8;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .ctrl-btn:hover { background: #2d3748; color: #e2e8f0; }
+
+        #legend {
+            position: absolute;
+            bottom: 12px; left: 12px;
+            background: #1e2433;
+            border: 1px solid #2d3748;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 12px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+            color: #94a3b8;
+        }
+
+        .legend-item:last-child { margin-bottom: 0; }
+
+        .legend-dot {
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        #sidebar {
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel { border-bottom: 1px solid #1e2433; }
+
+        .panel-header {
+            padding: 14px 20px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+        }
+
+        .panel-header:hover { color: #94a3b8; }
+        .panel-body { display: block; }
+        .panel-body.collapsed { display: none; }
+
+        .metrics-header {
+            padding: 6px 20px;
+            display: grid;
+            grid-template-columns: 1fr 40px 40px 60px;
+            gap: 8px;
+            font-size: 11px;
+            color: #475569;
+            border-bottom: 1px solid #1e2433;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .metrics-header span:not(:first-child) { text-align: right; }
+
+        .metric-row {
+            padding: 8px 20px;
+            display: grid;
+            grid-template-columns: 1fr 40px 40px 60px;
+            gap: 8px;
+            font-size: 12px;
+            border-bottom: 1px solid #1a2030;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .metric-row:hover { background: #1a2030; }
+
+        .metric-name {
+            color: #cbd5e1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .metric-val { color: #64748b; text-align: right; }
+        .metric-bar-wrap { grid-column: 1 / -1; padding: 0 0 4px; }
+
+        .inst-bar {
+            height: 3px;
+            background: #1e2433;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .inst-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.3s;
+        }
+
+        .alert-item {
+            padding: 10px 20px;
+            border-bottom: 1px solid #1a2030;
+            font-size: 12px;
+        }
+
+        .alert-item:hover { background: #1a2030; }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .badge-high   { background: #450a0a; color: #fca5a5; }
+        .badge-medium { background: #451a03; color: #fcd34d; }
+        .badge-low    { background: #052e16; color: #6ee7b7; }
+
+        .alert-msg   { color: #94a3b8; line-height: 1.4; }
+        .alert-class { color: #6366f1; font-weight: 500; }
+
+        .empty { padding: 16px 20px; color: #374151; font-size: 12px; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Architecture Analyzer</h1>
+    <span>Static analysis for Java projects</span>
+</header>
+
+<section id="input">
+    <input
+            id="repo-input"
+            type="text"
+            placeholder="https://github.com/user/repository  ou  /caminho/local/projeto"
+    />
+    <button id="analyze-btn" onclick="analyze()">Analisar</button>
+</section>
+
+<div id="status">
+    <div class="spinner" id="spinner"></div>
+    <span id="status-text">Cole a URL de um repositório GitHub ou um path local.</span>
+</div>
+
+<div id="dashboard">
+
+    <section id="summary">
+        <div class="stat">
+            <div class="stat-value" id="s-classes">—</div>
+            <div class="stat-label">Classes</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value" id="s-deps">—</div>
+            <div class="stat-label">Dependências</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value" id="s-violations">—</div>
+            <div class="stat-label">Violações</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value" id="s-alerts">—</div>
+            <div class="stat-label">Alertas de segurança</div>
+        </div>
+    </section>
+
+    <div id="main">
+
+        <section id="graph">
+            <div id="cy"></div>
+            <div id="graph-controls">
+                <button class="ctrl-btn" onclick="cy.fit()">Fit</button>
+                <button class="ctrl-btn" onclick="cy.reset()">Reset</button>
+                <button class="ctrl-btn" onclick="changeLayout('breadthfirst')">Hierárquico</button>
+                <button class="ctrl-btn" onclick="changeLayout('circle')">Circular</button>
+                <button class="ctrl-btn" onclick="changeLayout('cose')">Force</button>
+            </div>
+            <div id="legend">
+                <div class="legend-item"><div class="legend-dot" style="background:#6366f1"></div>Controller</div>
+                <div class="legend-item"><div class="legend-dot" style="background:#10b981"></div>Service</div>
+                <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div>Repository</div>
+                <div class="legend-item"><div class="legend-dot" style="background:#64748b"></div>Other</div>
+            </div>
+        </section>
+
+        <aside id="sidebar">
+
+            <div class="panel">
+                <div class="panel-header" onclick="togglePanel(this)">
+                    Métricas <span>▾</span>
+                </div>
+                <div class="panel-body" id="metrics-panel"></div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header" onclick="togglePanel(this)">
+                    Violações <span>▾</span>
+                </div>
+                <div class="panel-body" id="violations-panel"></div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header" onclick="togglePanel(this)">
+                    Alertas de Segurança <span>▾</span>
+                </div>
+                <div class="panel-body" id="security-panel"></div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header" onclick="togglePanel(this)">
+                    Ciclos <span>▾</span>
+                </div>
+                <div class="panel-body" id="cycles-panel"></div>
+            </div>
+
+        </aside>
+    </div>
+</div>
+
+<script>
+    let cy = null;
+
+    // cores por tipo de classe
+    const TYPE_COLORS = {
+        CONTROLLER: '#6366f1',
+        SERVICE:    '#10b981',
+        REPOSITORY: '#f59e0b',
+        COMPONENT:  '#38bdf8',
+        OTHER:      '#64748b'
+    };
+
+    async function analyze() {
+        const input = document.getElementById('repo-input').value.trim();
+        if (!input) return;
+
+        setLoading(true);
+
+        const body = input.startsWith('http')
+            ? { repoUrl: input }
+            : { localPath: input };
+
+        try {
+            const res = await fetch('/api/analyze', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+
+            if (!res.ok) {
+                const err = await res.text();
+                setStatus('Erro: ' + err, false);
+                return;
+            }
+
+            const report = await res.json();
+            renderDashboard(report);
+
+        } catch (e) {
+            setStatus('Falha na conexão: ' + e.message, false);
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    function renderDashboard(report) {
+        document.getElementById('dashboard').style.display = 'block';
+
+        const vc = report.violations?.length ?? 0;
+        const ac = report.securityAlerts?.length ?? 0;
+
+        document.getElementById('s-classes').textContent = report.totalClasses;
+        document.getElementById('s-deps').textContent    = report.totalDependencies;
+
+        const vEl = document.getElementById('s-violations');
+        vEl.textContent = vc;
+        vEl.className = 'stat-value ' + (vc > 0 ? 'danger' : 'ok');
+
+        const aEl = document.getElementById('s-alerts');
+        aEl.textContent = ac;
+        aEl.className = 'stat-value ' + (ac > 0 ? 'warn' : 'ok');
+
+        renderGraph(report);
+        renderMetrics(report.metrics);
+        renderViolations(report.violations);
+        renderSecurity(report.securityAlerts);
+        renderCycles(report.cycles);
+
+        setStatus(
+            'Análise concluída — ' + report.totalClasses + ' classes, ' +
+            report.totalDependencies + ' dependências.',
+            true
+        );
+    }
+
+    function renderGraph(report) {
+
+        const instMap  = {};
+        const typeMap  = {};
+
+        (report.metrics || []).forEach(m => {
+            instMap[m.className] = m.instability;
+            typeMap[m.className] = m.classType;   // ← tipo real da API
+        });
+
+        const nodeSet = new Set();
+        (report.dependencies || []).forEach(dep => {
+            if (dep.from) nodeSet.add(dep.from);
+            if (dep.to)   nodeSet.add(dep.to);
+        });
+        (report.metrics || []).forEach(m => nodeSet.add(m.className));
+
+        const elements = [];
+
+        nodeSet.forEach(name => {
+            const type  = typeMap[name]  || 'OTHER';
+            const color = TYPE_COLORS[type] || TYPE_COLORS.OTHER;
+
+            elements.push({
+                data: {
+                    id:          name,
+                    label:       name,
+                    color,
+                    type,
+                    instability: instMap[name] ?? 0
+                }
+            });
+        });
+
+        (report.dependencies || []).forEach(dep => {
+            if (dep.from && dep.to) {
+                elements.push({
+                    data: {
+                        id:     dep.from + '__' + dep.to,
+                        source: dep.from,
+                        target: dep.to
+                    }
+                });
+            }
+        });
+
+        if (cy) cy.destroy();
+
+        cy = cytoscape({
+            container: document.getElementById('cy'),
+            elements,
+            style: [
+                {
+                    selector: 'node',
+                    style: {
+                        'label':            'data(label)',
+                        'font-size':        '11px',
+                        'color':            '#e2e8f0',
+                        'text-valign':      'center',
+                        'text-halign':      'center',
+                        'background-color': ele => ele.data('color') || '#64748b',
+                            'width':            'label',
+                        'height':           28,
+                        'padding':          '8px',
+                        'shape':            'roundrectangle',
+                        'border-width':     1,
+                        'border-color':     '#2d3748'
+                    }
+                },
+                {
+                    selector: 'node:selected',
+                    style: { 'border-color': '#a5b4fc', 'border-width': 2 }
+                },
+                {
+                    selector: '.highlighted',
+                    style: { 'border-color': '#a5b4fc', 'border-width': 2, 'opacity': 1 }
+                },
+                {
+                    selector: '.faded',
+                    style: { 'opacity': 0.12 }
+                },
+                {
+                    selector: 'edge',
+                    style: {
+                        'width':              1,
+                        'line-color':         '#2d3748',
+                        'target-arrow-color': '#2d3748',
+                        'target-arrow-shape': 'triangle',
+                        'curve-style':        'bezier',
+                        'arrow-scale':        0.8
+                    }
+                },
+                {
+                    selector: 'edge.highlighted',
+                    style: {
+                        'line-color':         '#6366f1',
+                        'target-arrow-color': '#6366f1',
+                        'width':              2
+                    }
+                },
+                {
+                    selector: 'edge:selected',
+                    style: {
+                        'line-color':         '#6366f1',
+                        'target-arrow-color': '#6366f1'
+                    }
+                }
+            ],
+            layout: { name: 'breadthfirst', directed: true, padding: 20 }
+        });
+
+        cy.on('tap', 'node', evt => {
+            const node = evt.target;
+            cy.elements().removeClass('highlighted faded');
+            node.addClass('highlighted');
+            node.connectedEdges().addClass('highlighted');
+            node.neighborhood().nodes().addClass('highlighted');
+            cy.elements()
+                .not(node)
+                .not(node.connectedEdges())
+                .not(node.neighborhood().nodes())
+                .addClass('faded');
+        });
+
+        cy.on('tap', evt => {
+            if (evt.target === cy) {
+                cy.elements().removeClass('highlighted faded');
+            }
+        });
+    }
+
+    function changeLayout(name) {
+        if (!cy) return;
+        cy.layout({
+            name,
+            directed: name === 'breadthfirst',
+            padding:  20,
+            animate:  true,
+            animationDuration: 400
+        }).run();
+    }
+
+    function renderMetrics(metrics) {
+        const el = document.getElementById('metrics-panel');
+        if (!metrics?.length) {
+            el.innerHTML = '<div class="empty">Sem dados.</div>';
+            return;
+        }
+
+        const header = `
+      <div class="metrics-header">
+        <span>Classe</span>
+        <span>In</span>
+        <span>Out</span>
+        <span>Inst.</span>
+      </div>`;
+
+        const rows = metrics.map(m => {
+            const pct   = Math.round(m.instability * 100);
+            const color = pct >= 80 ? '#ef4444' : pct >= 50 ? '#f59e0b' : '#10b981';
+            return `
+        <div class="metric-row" onclick="highlightNode('${m.className}')">
+          <div class="metric-name" title="${m.className}">${m.className}</div>
+          <div class="metric-val">${m.fanIn}</div>
+          <div class="metric-val">${m.fanOut}</div>
+          <div class="metric-val">${pct}%</div>
+          <div class="metric-bar-wrap">
+            <div class="inst-bar">
+              <div class="inst-fill" style="width:${pct}%;background:${color}"></div>
+            </div>
+          </div>
+        </div>`;
+        }).join('');
+
+        el.innerHTML = header + rows;
+    }
+
+    function renderViolations(violations) {
+        const el = document.getElementById('violations-panel');
+        if (!violations?.length) {
+            el.innerHTML = '<div class="empty">✓ Nenhuma violação.</div>';
+            return;
+        }
+        el.innerHTML = violations.map(v => `
+      <div class="alert-item">
+        <span class="badge badge-${v.severity.toLowerCase()}">${v.severity}</span>
+        <div class="alert-class">${v.from} → ${v.to}</div>
+        <div class="alert-msg">${v.message}</div>
+      </div>`).join('');
+    }
+
+    function renderSecurity(alerts) {
+        const el = document.getElementById('security-panel');
+        if (!alerts?.length) {
+            el.innerHTML = '<div class="empty">✓ Nenhum alerta.</div>';
+            return;
+        }
+        el.innerHTML = alerts.map(a => `
+      <div class="alert-item">
+        <span class="badge badge-${a.severity.toLowerCase()}">${a.severity}</span>
+        <div class="alert-class">${a.className}</div>
+        <div class="alert-msg">${a.detail}</div>
+      </div>`).join('');
+    }
+
+    function renderCycles(cycles) {
+        const el = document.getElementById('cycles-panel');
+        if (!cycles?.length) {
+            el.innerHTML = '<div class="empty">✓ Nenhum ciclo.</div>';
+            return;
+        }
+        el.innerHTML = cycles.map(c => `
+      <div class="alert-item">
+        <span class="badge badge-high">CICLO</span>
+        <div class="alert-msg">${c}</div>
+      </div>`).join('');
+    }
+
+    function highlightNode(name) {
+        if (!cy) return;
+        const node = cy.getElementById(name);
+        if (!node.length) return;
+        cy.elements().removeClass('highlighted faded');
+        node.addClass('highlighted');
+        node.connectedEdges().addClass('highlighted');
+        node.neighborhood().nodes().addClass('highlighted');
+        cy.elements()
+            .not(node)
+            .not(node.connectedEdges())
+            .not(node.neighborhood().nodes())
+            .addClass('faded');
+        cy.animate({
+            fit: { eles: node.neighborhood().add(node), padding: 40 }
+        }, { duration: 400 });
+    }
+
+    function togglePanel(header) {
+        const body  = header.nextElementSibling;
+        const arrow = header.querySelector('span');
+        body.classList.toggle('collapsed');
+        arrow.textContent = body.classList.contains('collapsed') ? '▸' : '▾';
+    }
+
+    function setLoading(loading) {
+        document.getElementById('analyze-btn').disabled = loading;
+        document.getElementById('spinner').style.display = loading ? 'block' : 'none';
+        if (loading) setStatus('Analisando...', null);
+    }
+
+    function setStatus(msg, ok) {
+        const el = document.getElementById('status-text');
+        el.textContent = msg;
+        el.style.color = ok === true ? '#10b981' : ok === false ? '#ef4444' : '#64748b';
+    }
+
+    document.getElementById('repo-input').addEventListener('keydown', e => {
+        if (e.key === 'Enter') analyze();
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,371 @@
+{
+  "projectPath" : "/Users/feandres/Developer/teste/spring-petclinic/src/main/java",
+  "analyzedAt" : "2026-06-06T08:39:32.195885",
+  "totalClasses" : 25,
+  "totalDependencies" : 36,
+  "dependencies" : [ {
+    "from" : "Owner",
+    "to" : "Person"
+  }, {
+    "from" : "Owner",
+    "to" : "Pet"
+  }, {
+    "from" : "Owner",
+    "to" : "Visit"
+  }, {
+    "from" : "OwnerController",
+    "to" : "Owner"
+  }, {
+    "from" : "OwnerController",
+    "to" : "OwnerRepository"
+  }, {
+    "from" : "OwnerRepository",
+    "to" : "Owner"
+  }, {
+    "from" : "Pet",
+    "to" : "NamedEntity"
+  }, {
+    "from" : "Pet",
+    "to" : "PetType"
+  }, {
+    "from" : "Pet",
+    "to" : "Visit"
+  }, {
+    "from" : "PetClinicRuntimeHints",
+    "to" : "BaseEntity"
+  }, {
+    "from" : "PetClinicRuntimeHints",
+    "to" : "Person"
+  }, {
+    "from" : "PetClinicRuntimeHints",
+    "to" : "Vet"
+  }, {
+    "from" : "PetController",
+    "to" : "Owner"
+  }, {
+    "from" : "PetController",
+    "to" : "OwnerRepository"
+  }, {
+    "from" : "PetController",
+    "to" : "Pet"
+  }, {
+    "from" : "PetController",
+    "to" : "PetType"
+  }, {
+    "from" : "PetController",
+    "to" : "PetTypeRepository"
+  }, {
+    "from" : "PetType",
+    "to" : "NamedEntity"
+  }, {
+    "from" : "PetTypeFormatter",
+    "to" : "PetType"
+  }, {
+    "from" : "PetTypeFormatter",
+    "to" : "PetTypeRepository"
+  }, {
+    "from" : "PetTypeRepository",
+    "to" : "PetType"
+  }, {
+    "from" : "PetValidator",
+    "to" : "Pet"
+  }, {
+    "from" : "Specialty",
+    "to" : "NamedEntity"
+  }, {
+    "from" : "Vet",
+    "to" : "NamedEntity"
+  }, {
+    "from" : "Vet",
+    "to" : "Person"
+  }, {
+    "from" : "Vet",
+    "to" : "Specialty"
+  }, {
+    "from" : "VetController",
+    "to" : "Vet"
+  }, {
+    "from" : "VetController",
+    "to" : "VetRepository"
+  }, {
+    "from" : "VetController",
+    "to" : "Vets"
+  }, {
+    "from" : "VetRepository",
+    "to" : "Vet"
+  }, {
+    "from" : "Vets",
+    "to" : "Vet"
+  }, {
+    "from" : "Visit",
+    "to" : "BaseEntity"
+  }, {
+    "from" : "VisitController",
+    "to" : "Owner"
+  }, {
+    "from" : "VisitController",
+    "to" : "OwnerRepository"
+  }, {
+    "from" : "VisitController",
+    "to" : "Pet"
+  }, {
+    "from" : "VisitController",
+    "to" : "Visit"
+  } ],
+  "cycles" : [ ],
+  "metrics" : [ {
+    "className" : "VetController",
+    "fanIn" : 0,
+    "fanOut" : 3,
+    "instability" : 1.0,
+    "classType" : "CONTROLLER"
+  }, {
+    "className" : "VisitController",
+    "fanIn" : 0,
+    "fanOut" : 4,
+    "instability" : 1.0,
+    "classType" : "CONTROLLER"
+  }, {
+    "className" : "PetTypeFormatter",
+    "fanIn" : 0,
+    "fanOut" : 2,
+    "instability" : 1.0,
+    "classType" : "COMPONENT"
+  }, {
+    "className" : "OwnerController",
+    "fanIn" : 0,
+    "fanOut" : 2,
+    "instability" : 1.0,
+    "classType" : "CONTROLLER"
+  }, {
+    "className" : "PetController",
+    "fanIn" : 0,
+    "fanOut" : 5,
+    "instability" : 1.0,
+    "classType" : "CONTROLLER"
+  }, {
+    "className" : "PetValidator",
+    "fanIn" : 0,
+    "fanOut" : 1,
+    "instability" : 1.0,
+    "classType" : "OTHER"
+  }, {
+    "className" : "PetClinicRuntimeHints",
+    "fanIn" : 0,
+    "fanOut" : 3,
+    "instability" : 1.0,
+    "classType" : "OTHER"
+  }, {
+    "className" : "Specialty",
+    "fanIn" : 1,
+    "fanOut" : 1,
+    "instability" : 0.5,
+    "classType" : "OTHER"
+  }, {
+    "className" : "VetRepository",
+    "fanIn" : 1,
+    "fanOut" : 1,
+    "instability" : 0.5,
+    "classType" : "REPOSITORY"
+  }, {
+    "className" : "Vets",
+    "fanIn" : 1,
+    "fanOut" : 1,
+    "instability" : 0.5,
+    "classType" : "OTHER"
+  }, {
+    "className" : "Vet",
+    "fanIn" : 4,
+    "fanOut" : 3,
+    "instability" : 0.42857142857142855,
+    "classType" : "OTHER"
+  }, {
+    "className" : "Pet",
+    "fanIn" : 4,
+    "fanOut" : 3,
+    "instability" : 0.42857142857142855,
+    "classType" : "OTHER"
+  }, {
+    "className" : "Owner",
+    "fanIn" : 4,
+    "fanOut" : 3,
+    "instability" : 0.42857142857142855,
+    "classType" : "OTHER"
+  }, {
+    "className" : "PetTypeRepository",
+    "fanIn" : 2,
+    "fanOut" : 1,
+    "instability" : 0.3333333333333333,
+    "classType" : "REPOSITORY"
+  }, {
+    "className" : "OwnerRepository",
+    "fanIn" : 3,
+    "fanOut" : 1,
+    "instability" : 0.25,
+    "classType" : "REPOSITORY"
+  }, {
+    "className" : "Visit",
+    "fanIn" : 3,
+    "fanOut" : 1,
+    "instability" : 0.25,
+    "classType" : "OTHER"
+  }, {
+    "className" : "PetType",
+    "fanIn" : 4,
+    "fanOut" : 1,
+    "instability" : 0.2,
+    "classType" : "OTHER"
+  }, {
+    "className" : "WelcomeController",
+    "fanIn" : 0,
+    "fanOut" : 0,
+    "instability" : 0.0,
+    "classType" : "CONTROLLER"
+  }, {
+    "className" : "CacheConfiguration",
+    "fanIn" : 0,
+    "fanOut" : 0,
+    "instability" : 0.0,
+    "classType" : "OTHER"
+  }, {
+    "className" : "CrashController",
+    "fanIn" : 0,
+    "fanOut" : 0,
+    "instability" : 0.0,
+    "classType" : "CONTROLLER"
+  }, {
+    "className" : "WebConfiguration",
+    "fanIn" : 0,
+    "fanOut" : 0,
+    "instability" : 0.0,
+    "classType" : "OTHER"
+  }, {
+    "className" : "BaseEntity",
+    "fanIn" : 2,
+    "fanOut" : 0,
+    "instability" : 0.0,
+    "classType" : "OTHER"
+  }, {
+    "className" : "Person",
+    "fanIn" : 3,
+    "fanOut" : 0,
+    "instability" : 0.0,
+    "classType" : "OTHER"
+  }, {
+    "className" : "NamedEntity",
+    "fanIn" : 4,
+    "fanOut" : 0,
+    "instability" : 0.0,
+    "classType" : "OTHER"
+  }, {
+    "className" : "PetClinicApplication",
+    "fanIn" : 0,
+    "fanOut" : 0,
+    "instability" : 0.0,
+    "classType" : "OTHER"
+  } ],
+  "violations" : [ {
+    "message" : "Controller depende diretamente de Repository",
+    "severity" : "HIGH",
+    "from" : "VetController",
+    "to" : "VetRepository"
+  }, {
+    "message" : "Controller depende diretamente de Repository",
+    "severity" : "HIGH",
+    "from" : "VisitController",
+    "to" : "OwnerRepository"
+  }, {
+    "message" : "Controller depende diretamente de Repository",
+    "severity" : "HIGH",
+    "from" : "OwnerController",
+    "to" : "OwnerRepository"
+  }, {
+    "message" : "Controller depende diretamente de Repository",
+    "severity" : "HIGH",
+    "from" : "PetController",
+    "to" : "OwnerRepository"
+  }, {
+    "message" : "Controller depende diretamente de Repository",
+    "severity" : "HIGH",
+    "from" : "PetController",
+    "to" : "PetTypeRepository"
+  }, {
+    "message" : "@Transactional em Repository — gerenciamento de transação pertence ao Service",
+    "severity" : "LOW",
+    "from" : "VetRepository",
+    "to" : "-"
+  } ],
+  "securityAlerts" : [ {
+    "className" : "VetController",
+    "detail" : "Endpoint sem autorização: showVetList()",
+    "severity" : "MEDIUM"
+  }, {
+    "className" : "VetController",
+    "detail" : "Endpoint sem autorização: showResourcesVetList()",
+    "severity" : "MEDIUM"
+  }, {
+    "className" : "VisitController",
+    "detail" : "Endpoint sem autorização: initNewVisitForm()",
+    "severity" : "MEDIUM"
+  }, {
+    "className" : "VisitController",
+    "detail" : "Endpoint sem autorização: processNewVisitForm()",
+    "severity" : "MEDIUM"
+  }, {
+    "className" : "OwnerController",
+    "detail" : "Endpoint sem autorização: initCreationForm()",
+    "severity" : "MEDIUM"
+  }, {
+    "className" : "OwnerController",
+    "detail" : "Endpoint sem autorização: processCreationForm()",
+    "severity" : "MEDIUM"
+  }, {
+    "className" : "OwnerController",
+    "detail" : "Endpoint sem autorização: initFindForm()",
+    "severity" : "MEDIUM"
+  }, {
+    "className" : "OwnerController",
+    "detail" : "Endpoint sem autorização: processFindForm()",
+    "severity" : "MEDIUM"
+  }, {
+    "className" : "OwnerController",
+    "detail" : "Endpoint sem autorização: initUpdateOwnerForm()",
+    "severity" : "MEDIUM"
+  }, {
+    "className" : "OwnerController",
+    "detail" : "Endpoint sem autorização: processUpdateOwnerForm()",
+    "severity" : "MEDIUM"
+  }, {
+    "className" : "OwnerController",
+    "detail" : "Endpoint sem autorização: showOwner()",
+    "severity" : "MEDIUM"
+  }, {
+    "className" : "PetController",
+    "detail" : "Endpoint sem autorização: initCreationForm()",
+    "severity" : "MEDIUM"
+  }, {
+    "className" : "PetController",
+    "detail" : "Endpoint sem autorização: processCreationForm()",
+    "severity" : "MEDIUM"
+  }, {
+    "className" : "PetController",
+    "detail" : "Endpoint sem autorização: initUpdateForm()",
+    "severity" : "MEDIUM"
+  }, {
+    "className" : "PetController",
+    "detail" : "Endpoint sem autorização: processUpdateForm()",
+    "severity" : "MEDIUM"
+  }, {
+    "className" : "WelcomeController",
+    "detail" : "Endpoint sem autorização: welcome()",
+    "severity" : "MEDIUM"
+  }, {
+    "className" : "CrashController",
+    "detail" : "Endpoint sem autorização: triggerException()",
+    "severity" : "MEDIUM"
+  }, {
+    "className" : "WelcomeController",
+    "detail" : "Sem classe de teste — CONTROLLER sem cobertura detectada",
+    "severity" : "LOW"
+  } ]
+}
