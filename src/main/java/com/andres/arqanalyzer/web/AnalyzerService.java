@@ -17,6 +17,8 @@ import com.andres.arqanalyzer.detectors.LoggingDetector;
 import com.andres.arqanalyzer.detectors.MissingTestsDetector;
 import com.andres.arqanalyzer.detectors.SecurityDetector;
 import com.andres.arqanalyzer.detectors.ViolationDetector;
+import com.github.javaparser.ParserConfiguration;
+import com.github.javaparser.StaticJavaParser;
 import org.springframework.stereotype.Service;
 
 import java.nio.file.Files;
@@ -66,6 +68,27 @@ public class AnalyzerService {
         }
     }
 
+    private ParserConfiguration.LanguageLevel detectLanguageLevel(Path projectRoot) {
+        // tenta ler a versão do pom.xml
+        Path pom = projectRoot.resolve("pom.xml");
+        if (pom.toFile().exists()) {
+            try {
+                String content = Files.readString(pom);
+                if (content.contains("<java.version>21") || content.contains("release>21")) {
+                    return ParserConfiguration.LanguageLevel.JAVA_21;
+                }
+                if (content.contains("<java.version>17") || content.contains("release>17")) {
+                    return ParserConfiguration.LanguageLevel.JAVA_17;
+                }
+                if (content.contains("<java.version>11") || content.contains("release>11")) {
+                    return ParserConfiguration.LanguageLevel.JAVA_11;
+                }
+            } catch (Exception ignored) {}
+        }
+        // fallback — usa o mais alto disponível
+        return ParserConfiguration.LanguageLevel.JAVA_17;
+    }
+
     private Path findJavaRoot(Path projectRoot) throws Exception {
         // tenta src/main/java primeiro
         Path standard = projectRoot.resolve("src/main/java");
@@ -90,6 +113,17 @@ public class AnalyzerService {
     }
 
     private AnalysisReport runAnalysis(Path javaRoot, int couplingThreshold) throws Exception {
+
+        ParserConfiguration.LanguageLevel level = detectLanguageLevel(javaRoot.getParent());
+
+        ParserConfiguration config = new ParserConfiguration();
+        config.setLanguageLevel(level);
+        config.setAttributeComments(false);
+        StaticJavaParser.setConfiguration(config);
+
+        System.out.println("Language level detectado: " + level);
+
+        
         var nodes = new ProjectScanner(new JavaFileParser()).scan(javaRoot);
         var graph = new GraphBuilder().build(nodes);
 

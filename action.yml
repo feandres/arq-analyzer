@@ -1,0 +1,37 @@
+name: Architecture Analyzer
+description: Static analysis for Java/Spring Boot projects — dependency graph, architectural violations, security alerts
+author: feandres
+
+branding:
+  icon: search
+  color: purple
+
+inputs:
+  path:
+    description: Path to the Java project root (relative to repository root)
+    required: false
+    default: '.'
+  coupling-threshold:
+    description: Maximum allowed fan-out per class before flagging as high coupling
+    required: false
+    default: '7'
+  fail-on-violations:
+    description: Fail the build if architectural violations or security alerts are found
+    required: false
+    default: 'true'
+
+outputs:
+  violations:
+    description: Number of architectural violations found
+  security-alerts:
+    description: Number of security alerts found
+  report-path:
+    description: Path to the generated JSON report
+
+runs:
+  using: docker
+  image: Dockerfile
+  args:
+    - --analyzer.path=${{ inputs.path }}
+    - --analyzer.threshold=${{ inputs.coupling-threshold }}
+    - --analyzer.fail=${{ inputs.fail-on-violations }}

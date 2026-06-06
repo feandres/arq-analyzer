@@ -17,11 +17,6 @@ import java.util.ArrayList;
 @Component
 public class JavaFileParser {
 
-    static {
-        StaticJavaParser.getParserConfiguration()
-                .setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_17);
-    }
-
     public ClassNode parse(File file) throws Exception {
         CompilationUnit cu = StaticJavaParser.parse(file);
 
