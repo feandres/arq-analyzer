@@ -17,6 +17,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Logger;
 
 @Component
 public class LoggingDetector {
@@ -30,6 +31,8 @@ public class LoggingDetector {
             "ArqAnalyzerApplication"
     );
 
+    Logger logger = Logger.getLogger(getClass().getName());
+
     public List<SecurityAlert> analyzeProject(Path projectRoot) throws IOException {
         List<SecurityAlert> alerts = new ArrayList<>();
 
@@ -40,7 +43,7 @@ public class LoggingDetector {
                     try {
                         alerts.addAll(analyzeFile(file.toFile()));
                     } catch (Exception e) {
-                        System.err.println("Erro ao analisar logging: " + file);
+                        logger.warning("Erro ao analisar logging: " + file);
                     }
                 }
                 return FileVisitResult.CONTINUE;

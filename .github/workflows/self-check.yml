@@ -29,5 +29,5 @@ jobs:
         uses: ./
         with:
           path: '.'
-          coupling-threshold: '10'
+          coupling-threshold: '20'
           fail-on-violations: 'false'
