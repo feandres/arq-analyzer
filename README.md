@@ -1,5 +1,10 @@
 # Architecture Analyzer
 
+![Architecture Self-Check](https://github.com/feandres/arq-analyzer/actions/workflows/self-check.yml/badge.svg)
+![Java](https://img.shields.io/badge/Java-21-orange)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.3-green)
+![License](https://img.shields.io/badge/license-MIT-blue)
+
 Static analysis tool for Java/Spring Boot projects. Analyzes dependency graphs, detects architectural violations, calculates coupling metrics, and identifies security issues — directly from source code, without compilation.
 
 ## Demo
