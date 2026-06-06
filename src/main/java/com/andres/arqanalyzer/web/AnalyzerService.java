@@ -19,6 +19,7 @@ import com.andres.arqanalyzer.detectors.SecurityDetector;
 import com.andres.arqanalyzer.detectors.ViolationDetector;
 import com.github.javaparser.ParserConfiguration;
 import com.github.javaparser.StaticJavaParser;
+
 import org.springframework.stereotype.Service;
 
 import java.nio.file.Files;
@@ -27,6 +28,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.logging.Logger;
 
 @Service
 public class AnalyzerService {
@@ -34,13 +36,18 @@ public class AnalyzerService {
     private final GitCloneService gitCloneService;
     private final MissingTestsDetector missingTestsDetector;
     private final LoggingDetector loggingDetector;
+    private final AnalysisPipeline analysisPipeline;
+
+    Logger logger = Logger.getLogger(getClass().getName());
 
     public AnalyzerService(GitCloneService gitCloneService,
                            MissingTestsDetector missingTestsDetector,
-                           LoggingDetector loggingDetector) {
-        this.gitCloneService      = gitCloneService;
+                           LoggingDetector loggingDetector,
+                           AnalysisPipeline analysisPipeline) {
+        this.gitCloneService   = gitCloneService;
         this.missingTestsDetector = missingTestsDetector;
-        this.loggingDetector      = loggingDetector;
+        this.loggingDetector   = loggingDetector;
+        this.analysisPipeline  = analysisPipeline;
     }
 
     public AnalysisReport analyze(AnalyzeRequest request) throws Exception {
@@ -121,7 +128,7 @@ public class AnalyzerService {
         config.setAttributeComments(false);
         StaticJavaParser.setConfiguration(config);
 
-        System.out.println("Language level detectado: " + level);
+        logger.info("Language level detectado: " + level);
 
         
         var nodes = new ProjectScanner(new JavaFileParser()).scan(javaRoot);
@@ -137,12 +144,7 @@ public class AnalyzerService {
 
         var metrics = new MetricsCalculator().calculateAll(graph);
 
-        List<ArchitectureRule> rules = List.of(
-                new LayerViolationRule(),
-                new HexagonalArchitectureRule(),
-                new TransactionalMisuseRule(),
-                new HighCouplingRule(couplingThreshold)
-        );
+        List<ArchitectureRule> rules = analysisPipeline.buildRules(couplingThreshold);
 
         var violations   = new ViolationDetector().detect(graph, rules);
         var alerts       = new SecurityDetector().analyzeProject(javaRoot);

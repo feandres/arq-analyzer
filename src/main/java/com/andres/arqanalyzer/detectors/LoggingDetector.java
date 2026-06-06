@@ -25,6 +25,11 @@ public class LoggingDetector {
             "printStackTrace"
     );
 
+    private static final Set<String> EXCLUDED_CLASSES = Set.of(
+            "ConsoleReporter",
+            "ArqAnalyzerApplication"
+    );
+
     public List<SecurityAlert> analyzeProject(Path projectRoot) throws IOException {
         List<SecurityAlert> alerts = new ArrayList<>();
 
@@ -49,6 +54,10 @@ public class LoggingDetector {
         CompilationUnit cu = StaticJavaParser.parse(file);
         List<SecurityAlert> alerts = new ArrayList<>();
         String className = file.getName().replace(".java", "");
+
+        if (EXCLUDED_CLASSES.contains(className)) {
+            return List.of();
+        }
 
         cu.findAll(MethodCallExpr.class).forEach(call -> {
 

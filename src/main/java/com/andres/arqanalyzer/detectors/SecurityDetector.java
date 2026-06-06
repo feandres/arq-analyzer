@@ -19,9 +19,12 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Logger;
 
 @Component
 public class SecurityDetector {
+
+    Logger logger = Logger.getLogger(getClass().getName());
 
     private static final Set<String> MAPPING_ANNOTATIONS = Set.of(
             "GetMapping", "PostMapping", "PutMapping",
@@ -84,7 +87,7 @@ public class SecurityDetector {
                     try {
                         allAlerts.addAll(analyzeFile(file.toFile()));
                     } catch (Exception e) {
-                        System.err.println("Erro ao analisar: " + file + " — " + e.getMessage());
+                        logger.warning("Erro ao analisar: " + file + " — " + e.getMessage());
                     }
                 }
                 return FileVisitResult.CONTINUE;

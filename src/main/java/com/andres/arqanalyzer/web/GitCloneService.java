@@ -2,6 +2,8 @@ package com.andres.arqanalyzer.web;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.nio.file.Files;
@@ -10,31 +12,30 @@ import java.nio.file.Path;
 @Service
 public class GitCloneService {
 
+    private static final Logger log = LoggerFactory.getLogger(GitCloneService.class);
     private static final Path CLONE_BASE = Path.of(System.getProperty("java.io.tmpdir"), "arq-analyzer");
 
     public Path clone(String repoUrl) throws Exception {
-        // hash da URL para evitar conflitos
         String dirName = String.valueOf(Math.abs(repoUrl.hashCode()));
         Path targetDir = CLONE_BASE.resolve(dirName);
 
-        // se já existe, deleta e reclona (garante versão atualizada)
         if (targetDir.toFile().exists()) {
             FileUtils.deleteDirectory(targetDir.toFile());
         }
 
         Files.createDirectories(targetDir);
 
-        System.out.println("Clonando: " + repoUrl);
+        log.info("Clonando: {}", repoUrl);
 
         Git.cloneRepository()
                 .setURI(repoUrl)
                 .setDirectory(targetDir.toFile())
-                .setDepth(1)          // shallow clone — só o último commit
+                .setDepth(1)
                 .setCloneAllBranches(false)
                 .call()
                 .close();
 
-        System.out.println("Clone concluído em: " + targetDir);
+        log.info("Clone concluído em: {}", targetDir);
 
         return targetDir;
     }
@@ -42,8 +43,9 @@ public class GitCloneService {
     public void cleanup(Path repoPath) {
         try {
             FileUtils.deleteDirectory(repoPath.toFile());
+            log.info("Clone deletado: {}", repoPath);
         } catch (Exception e) {
-            System.err.println("Erro ao deletar clone: " + e.getMessage());
+            log.error("Erro ao deletar clone: {}", e.getMessage());
         }
     }
 }

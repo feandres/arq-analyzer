@@ -7,11 +7,15 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.stereotype.Component;
 
 import java.nio.file.Path;
+import java.util.logging.Logger;
 
 @Component
 public class JsonReporter {
 
     private final ObjectMapper mapper;
+
+    Logger logger = Logger.getLogger(getClass().getName());
+
 
     public JsonReporter() {
         this.mapper = new ObjectMapper()
@@ -22,7 +26,7 @@ public class JsonReporter {
 
     public void write(AnalysisReport report, Path outputPath) throws Exception {
         mapper.writeValue(outputPath.toFile(), report);
-        System.out.println("Relatório salvo em: " + outputPath.toAbsolutePath());
+        logger.info("Relatório salvo em: " + outputPath.toAbsolutePath());
     }
 
     public String toJson(AnalysisReport report) throws Exception {
