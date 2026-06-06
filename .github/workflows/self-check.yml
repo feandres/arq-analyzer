@@ -1,0 +1,21 @@
+name: Architecture Self-Check
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Analyze architecture
+        uses: ./
+        with:
+          path: '.'
+          coupling-threshold: '10'
+          fail-on-violations: 'false'
