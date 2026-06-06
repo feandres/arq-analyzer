@@ -2,6 +2,7 @@ package com.andres.arqanalyzer.web;
 
 import com.andres.arqanalyzer.core.report.AnalysisReport;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -15,6 +16,7 @@ public class AnalyzerController {
     }
 
     @PostMapping("/analyze")
+    @PreAuthorize("permitAll()")
     public ResponseEntity<?> analyze(@RequestBody AnalyzeRequest request) {
         try {
             AnalysisReport report = analyzerService.analyze(request);
@@ -28,6 +30,7 @@ public class AnalyzerController {
     }
 
     @GetMapping("/health")
+    @PreAuthorize("permitAll()")
     public ResponseEntity<String> health() {
         return ResponseEntity.ok("ok");
     }
