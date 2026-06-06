@@ -19,6 +19,55 @@ curl -X POST http://localhost:8080/api/analyze \
 
 ---
 
+## Using as a GitHub Action
+
+Add architecture analysis to any Java project's CI pipeline:
+
+```yaml
+name: Architecture Check
+
+on: [push, pull_request]
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.2.2
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Build project
+        run: ./mvnw clean package -DskipTests -q
+
+      - name: Analyze architecture
+        uses: feandres/arq-analyzer@main
+        with:
+          path: '.'
+          coupling-threshold: '7'
+          fail-on-violations: 'true'
+```
+
+### Action inputs
+
+| Input | Description | Default |
+|---|---|---|
+| `path` | Path to the Java project root | `.` |
+| `coupling-threshold` | Max fan-out before flagging high coupling | `7` |
+| `fail-on-violations` | Fail the build if violations are found | `true` |
+
+### Action outputs
+
+| Output | Description |
+|---|---|
+| `violations` | Number of architectural violations found |
+| `security-alerts` | Number of security alerts found |
+| `report-path` | Path to the generated `report.json` |
+
+---
+
 ## What it detects
 
 ### Architectural violations
@@ -84,19 +133,21 @@ src/main/java/com/andres/arqanalyzer/
 │
 └── web/                AnalyzerController  (POST /api/analyze)
                         AnalyzerService
+                        AnalysisPipeline
                         GitCloneService     (JGit shallow clone)
                         CorsConfig
+                        SecurityConfig
 ```
 
 ### Design decisions
 
-**`ArchitectureRule` as an interface** — adding a new rule is creating a new class. The `ViolationDetector` that iterates rules never changes. Open/Closed Principle applied while building a tool that detects Open/Closed violations.
+**`ArchitectureRule` as an interface** — adding a new rule means creating a new class. The `ViolationDetector` that iterates rules never changes. Open/Closed Principle applied while building a tool that detects Open/Closed violations.
 
 **Structured `DependencyDTO`** — dependencies are returned as `{from, to}` objects, not strings. The frontend never parses text.
 
 **Shallow clone** — GitHub repositories are cloned with `depth=1`, no full history. Clones are deleted after analysis.
 
-**`JAVA_17` language level** — configured on `StaticJavaParser` to support pattern matching and modern Java syntax in analyzed projects.
+**Auto language level detection** — the analyzer reads the project's `pom.xml` to detect the Java version and configures the AST parser accordingly (Java 11, 17, or 21).
 
 ---
 
@@ -136,43 +187,22 @@ curl -X POST http://localhost:8080/api/analyze \
 curl http://localhost:8080/api/health
 ```
 
-### Response format
+### Docker
 
-```json
-{
-  "projectPath": "/path/to/project/src/main/java",
-  "analyzedAt": "2026-06-06T08:38:24",
-  "totalClasses": 25,
-  "totalDependencies": 36,
-  "dependencies": [
-    { "from": "VetController", "to": "VetRepository" }
-  ],
-  "cycles": [],
-  "metrics": [
-    {
-      "className": "VetController",
-      "classType": "CONTROLLER",
-      "fanIn": 0,
-      "fanOut": 3,
-      "instability": 1.0
-    }
-  ],
-  "violations": [
-    {
-      "from": "VetController",
-      "to": "VetRepository",
-      "message": "Controller depende diretamente de Repository",
-      "severity": "HIGH"
-    }
-  ],
-  "securityAlerts": [
-    {
-      "className": "VetController",
-      "detail": "Endpoint sem autorização: showVetList()",
-      "severity": "MEDIUM"
-    }
-  ]
-}
+```bash
+# build
+docker build -t arq-analyzer .
+
+# run dashboard
+docker run -p 8080:8080 arq-analyzer
+
+# run CLI against a local project
+docker run \
+  -v /path/to/project:/project \
+  arq-analyzer \
+  --analyzer.path=/project \
+  --analyzer.threshold=7 \
+  --analyzer.fail=false
 ```
 
 ---
@@ -242,13 +272,105 @@ Node colors follow class type:
 
 ## Roadmap
 
-- [ ] Export report as PDF
-- [ ] Add custom rule configuration via YAML
-- [ ] Detect missing `@Valid` on controller parameters
-- [ ] Detect hardcoded credentials via pattern matching
-- [ ] Migrate frontend to Next.js
-- [ ] Docker image for standalone deployment
-- [ ] GitHub Action for CI integration
+Items marked with a skill tag indicate good areas for first contributions.
+
+### Core analysis
+- [ ] `good first issue` Detect missing `@Valid` on controller method parameters
+- [ ] `good first issue` Detect hardcoded credentials — passwords, tokens, API keys in string literals
+- [ ] `good first issue` Add `AbstractnessRule` — Robert Martin's A metric (ratio of abstract classes/interfaces)
+- [ ] Detect `Random` used instead of `SecureRandom` in security-sensitive contexts
+- [ ] Detect deserialisation of untrusted data
+- [ ] Support Gradle projects — read `build.gradle` in addition to `pom.xml`
+- [ ] Support Maven multi-module projects — cross-module dependency graph
+
+### Rules engine
+- [ ] `good first issue` Add rule configuration via `analyzer-rules.yml` — enable/disable rules per project
+- [ ] Add `@SuppressAnalysis` annotation support — allow teams to suppress known false positives
+- [ ] Add severity override per rule in configuration
+
+### Reporting
+- [ ] `good first issue` Export report as PDF
+- [ ] Add GitHub Actions step summary — post a markdown table of results directly in the PR
+- [ ] Add trend tracking — compare reports across commits, show regressions
+
+### Infrastructure
+- [ ] Unit tests for `GraphBuilder`, `CycleDetector`, `MetricsCalculator`, `JavaFileParser`
+- [ ] Integration tests using real Spring Boot project fixtures
+- [ ] Publish Docker image to GitHub Container Registry on release
+- [ ] Deploy as public SaaS on Railway or Render
+
+### Frontend
+- [ ] Migrate dashboard to Next.js + TypeScript
+- [ ] Add filter by class type in the dependency graph
+- [ ] Add search by class name
+- [ ] Add diff view — compare two analyses side by side
+
+---
+
+## Contributing
+
+Contributions are welcome. The codebase is intentionally structured to make adding new detections straightforward.
+
+### Adding a new architecture rule
+
+Create a class in `core/rules/` implementing `ArchitectureRule`:
+
+```java
+public class YourRule implements ArchitectureRule {
+
+    @Override
+    public String getName() {
+        return "Your Rule Name";
+    }
+
+    @Override
+    public List<Violation> evaluate(ProjectGraph graph) {
+        List<Violation> violations = new ArrayList<>();
+
+        for (DependencyEdge edge : graph.getGraph().edgeSet()) {
+            ClassNode from = graph.getGraph().getEdgeSource(edge);
+            ClassNode to   = graph.getGraph().getEdgeTarget(edge);
+
+            if (/* your condition */) {
+                violations.add(new Violation(
+                        from.getName(),
+                        to.getName(),
+                        "Your violation message",
+                        Severity.HIGH
+                ));
+            }
+        }
+
+        return violations;
+    }
+}
+```
+
+Register it in `AnalysisPipeline.buildRules()` and open a PR.
+
+### Adding a new security detector
+
+Create a class in `detectors/` and inject it into `AlertAggregator`. The pattern is consistent across all detectors — parse the `CompilationUnit` via `StaticJavaParser`, walk the AST, emit `SecurityAlert` for each finding.
+
+### Running the self-check locally
+
+```bash
+./mvnw clean package -DskipTests -q
+
+java -jar target/arq-analyzer-0.0.1-SNAPSHOT.jar \
+  --analyzer.path=. \
+  --analyzer.threshold=20 \
+  --analyzer.fail=false
+```
+
+### Workflow for contributions
+
+```
+1. Fork the repository
+2. Create a branch: git checkout -b feat/your-rule-name
+3. Implement and test locally against spring-petclinic
+4. Open a PR with the output of the self-check
+```
 
 ---
 
