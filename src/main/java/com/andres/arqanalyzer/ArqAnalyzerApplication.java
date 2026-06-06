@@ -9,16 +9,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext;
 import org.springframework.context.annotation.Bean;
 
 import java.nio.file.Path;
 
 @SpringBootApplication
 public class ArqAnalyzerApplication {
-
-    public static void main(String[] args) {
-        SpringApplication.run(ArqAnalyzerApplication.class, args);
-    }
 
     @Value("${analyzer.path:}")
     private String analyzerPath;
@@ -29,13 +26,31 @@ public class ArqAnalyzerApplication {
     @Value("${analyzer.fail:true}")
     private boolean analyzerFail;
 
+    public static void main(String[] args) {
+        // modo CLI — desativa web server se path foi fornecido
+        boolean isCliMode = isCli(args);
+
+        if (isCliMode) {
+            System.setProperty("spring.main.web-application-type", "none");
+        }
+
+        SpringApplication.run(ArqAnalyzerApplication.class, args);
+    }
+
+    private static boolean isCli(String[] args) {
+        for (String arg : args) {
+            if (arg.startsWith("--analyzer.path=") && arg.length() > "--analyzer.path=".length()) {
+                return true;
+            }
+        }
+        return System.getenv("INPUT_PATH") != null;
+    }
+
     @Bean
     CommandLineRunner run(AnalyzerService analyzerService,
                           ConsoleReporter consoleReporter,
                           JsonReporter jsonReporter) {
         return args -> {
-
-            // modo CLI — só roda se um path foi fornecido
             if (analyzerPath == null || analyzerPath.isBlank()) {
                 System.out.println("Dashboard disponível em http://localhost:8080");
                 return;
@@ -50,7 +65,7 @@ public class ArqAnalyzerApplication {
             consoleReporter.print(report);
             jsonReporter.write(report, Path.of("report.json"));
 
-            // seta output para o GitHub Actions
+            // output para GitHub Actions
             String githubOutput = System.getenv("GITHUB_OUTPUT");
             if (githubOutput != null) {
                 try (var writer = new java.io.FileWriter(githubOutput, true)) {
@@ -65,6 +80,8 @@ public class ArqAnalyzerApplication {
                 System.err.println("\n❌ Build falhou — problemas encontrados.");
                 System.exit(1);
             }
+
+            System.exit(0);
         };
     }
 }
