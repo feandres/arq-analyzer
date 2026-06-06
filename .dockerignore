@@ -1,6 +1,7 @@
-target/
 .git/
 .idea/
 *.iml
 .DS_Store
 report.json
+target/
+!target/arq-analyzer-0.0.1-SNAPSHOT.jar
